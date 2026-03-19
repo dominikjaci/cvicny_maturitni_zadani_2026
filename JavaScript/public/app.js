@@ -7,6 +7,13 @@ let onlyImportant = false;
 // DOM Elements
 const authSection = document.getElementById('auth-section');
 const dashboardSection = document.getElementById('dashboard-section');
+
+// Auth Containers
+const loginContainer = document.getElementById('login-container');
+const registerContainer = document.getElementById('register-container');
+const showRegisterLink = document.getElementById('show-register-link');
+const showLoginLink = document.getElementById('show-login-link');
+
 const userInfo = document.getElementById('user-info');
 const usernameDisplay = document.getElementById('username-display');
 const loginForm = document.getElementById('login-form');
@@ -23,11 +30,24 @@ const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
 const deleteConfirmPassword = document.getElementById('delete-confirm-password');
 
 // --- Initialization ---
-function init() {
+async function init() {
+    console.log("App initializing...");
     const savedUser = localStorage.getItem('user');
+
     if (savedUser) {
-        currentUser = JSON.parse(savedUser);
-        showDashboard();
+        try {
+            currentUser = JSON.parse(savedUser);
+            if (currentUser && currentUser._id) {
+                console.log("Restoring session for:", currentUser.username);
+                showDashboard();
+            } else {
+                showAuth();
+            }
+        } catch (e) {
+            console.error("Error parsing user from localStorage:", e);
+            localStorage.removeItem('user');
+            showAuth();
+        }
     } else {
         showAuth();
     }
@@ -37,35 +57,51 @@ function init() {
 function showAuth() {
     dashboardSection.style.display = 'none';
     userInfo.style.display = 'none';
-    authSection.style.display = 'block';
+    authSection.style.display = 'flex';
+    // Reset to login view by default
+    loginContainer.style.display = 'block';
+    registerContainer.style.display = 'none';
 }
 
 function showDashboard() {
     authSection.style.display = 'none';
     dashboardSection.style.display = 'block';
     userInfo.style.display = 'flex';
-    usernameDisplay.textContent = `Přihlášen: ${currentUser.username}`;
+    usernameDisplay.textContent = `Uživatel: ${currentUser.username}`;
     fetchNotes();
 }
 
 function renderNotes(notes) {
     notesList.innerHTML = '';
+    
+    if (!notes || notes.length === 0) {
+        notesList.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #888; padding: 2rem;">Zatím nemáte žádné poznámky.</p>';
+        return;
+    }
+
     notes.forEach(note => {
-        const date = new Date(note.createdAt).toLocaleString('cs-CZ');
+        const date = new Date(note.createdAt).toLocaleString('cs-CZ', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
         const card = document.createElement('div');
         card.className = `note-card ${note.isImportant ? 'important' : ''}`;
         
+        // Escape content safely
+        const safeTitle = escapeHtml(note.title);
+        const safeContent = escapeHtml(note.content);
+        
         card.innerHTML = `
             <div class="note-header">
-                <h3>${escapeHtml(note.title)}</h3>
+                <h3>${safeTitle}</h3>
                 <span class="note-date">${date}</span>
             </div>
-            <p>${escapeHtml(note.content)}</p>
+            <div class="note-content">${safeContent}</div>
             <div class="note-actions">
-                <button onclick="toggleImportance('${note._id}', ${!note.isImportant})">
-                    ${note.isImportant ? 'Zrušit důležité' : 'Označit jako důležité'}
+                <button onclick="window.toggleImportance('${note._id}', ${!note.isImportant})" title="${note.isImportant ? 'Zrušit označení důležité' : 'Označit jako důležité'}">
+                    ${note.isImportant ? '★ Důležité' : '☆ Důležité'}
                 </button>
-                <button class="danger" onclick="deleteNote('${note._id}')">Smazat</button>
+                <button class="danger" onclick="window.deleteNote('${note._id}')">Smazat</button>
             </div>
         `;
         notesList.appendChild(card);
@@ -73,6 +109,7 @@ function renderNotes(notes) {
 }
 
 function escapeHtml(text) {
+    if (!text) return '';
     const map = {
         '&': '&amp;',
         '<': '&lt;',
@@ -80,7 +117,7 @@ function escapeHtml(text) {
         '"': '&quot;',
         "'": '&#039;'
     };
-    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    return text.toString().replace(/[&<>"']/g, function(m) { return map[m]; });
 }
 
 // --- API Calls ---
@@ -93,111 +130,167 @@ async function fetchNotes() {
         }
 
         const res = await fetch(url);
-        if (!res.ok) throw new Error('Failed to fetch notes');
+        if (!res.ok) {
+            // Handle specific status codes if needed
+            if(res.status === 404) {
+                 renderNotes([]);
+                 return;
+            }
+            if (res.status === 503) {
+                 throw new Error("Databáze není dostupná.");
+            }
+            throw new Error(`Server responded with ${res.status}`);
+        }
         const notes = await res.json();
         renderNotes(notes);
     } catch (err) {
-        console.error(err);
-        alert('Chyba při načítání poznámek');
+        console.error("Fetch notes error:", err);
+        notesList.innerHTML = `<p style="color: red; text-align: center;">Chyba načítání: ${err.message}</p>`;
     }
 }
 
 async function login(username, password) {
-    const res = await fetch(`${API_URL}/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-    });
+    const errorEl = document.getElementById('login-error');
+    errorEl.textContent = '';
     
-    const data = await res.json();
-    if (res.ok) {
-        currentUser = data;
-        localStorage.setItem('user', JSON.stringify(currentUser));
-        showDashboard();
-    } else {
-        alert(data.message);
+    try {
+        const res = await fetch(`${API_URL}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        
+        const data = await res.json();
+        if (res.ok) {
+            currentUser = data;
+            localStorage.setItem('user', JSON.stringify(currentUser));
+            showDashboard();
+            loginForm.reset();
+        } else {
+            errorEl.textContent = data.message || 'Neplatné jméno nebo heslo.';
+        }
+    } catch (e) {
+        console.error("Login error:", e);
+        errorEl.textContent = 'Nelze se připojit k serveru.';
     }
 }
 
 async function register(username, password) {
-    const res = await fetch(`${API_URL}/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-    });
+    const errorEl = document.getElementById('register-error');
+    errorEl.textContent = '';
 
-    const data = await res.json();
-    if (res.ok) {
-        alert('Registrace úspěšná, nyní se můžete přihlásit.');
-        loginForm.reset();
-        registerForm.reset();
-    } else {
-        alert(data.message);
+    // Validation
+    if (password.length < 6) {
+        errorEl.textContent = 'Heslo musí mít alespoň 6 znaků.';
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+            alert('Registrace úspěšná! Nyní se prosím přihlaste.');
+            showLoginView();
+            document.getElementById('login-username').value = username;
+            document.getElementById('login-password').focus();
+            registerForm.reset();
+        } else {
+            errorEl.textContent = data.message || 'Registrace se nezdařila.';
+        }
+    } catch (e) {
+        console.error("Register error:", e);
+        errorEl.textContent = 'Nelze se připojit k serveru.';
     }
 }
 
 async function addNote(title, content) {
-    const res = await fetch(`${API_URL}/notes`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            userId: currentUser._id,
-            title,
-            content
-        })
-    });
+    try {
+        const res = await fetch(`${API_URL}/notes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                userId: currentUser._id,
+                title,
+                content
+            })
+        });
 
-    if (res.ok) {
-        fetchNotes();
-        addNoteForm.reset();
-    } else {
-        alert('Chyba při přidávání poznámky');
+        if (res.ok) {
+            fetchNotes(); // Refresh list
+            addNoteForm.reset();
+        } else {
+            const data = await res.json();
+            alert(data.message || 'Chyba při přidávání poznámky');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Chyba komunikace se serverem');
     }
 }
 
 async function deleteNote(noteId) {
     if (!confirm('Opravdu chcete smazat tuto poznámku?')) return;
 
-    const res = await fetch(`${API_URL}/notes/${noteId}`, {
-        method: 'DELETE'
-    });
+    try {
+        const res = await fetch(`${API_URL}/notes/${noteId}`, {
+            method: 'DELETE'
+        });
 
-    if (res.ok) {
-        fetchNotes();
-    } else {
-        alert('Chyba při mazání poznámky');
+        if (res.ok) {
+            fetchNotes(); // Refresh list to remove the item
+        } else {
+            alert('Chyba při mazání poznámky');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Chyba při mazání');
     }
 }
 
 async function toggleImportance(noteId, isImportant) {
-    const res = await fetch(`${API_URL}/notes/${noteId}/importance`, {
-        method: 'PUT', // Using PUT as defined in server.js
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isImportant })
-    });
+    try {
+        const res = await fetch(`${API_URL}/notes/${noteId}/importance`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ isImportant })
+        });
 
-    if (res.ok) {
-        fetchNotes();
-    } else {
-        alert('Chyba při změně důležitosti');
+        if (res.ok) {
+            fetchNotes(); // Refresh list to update order/styling
+        } else {
+            alert('Chyba při změně důležitosti');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Chyba při komunikaci se serverem');
     }
 }
 
 async function deleteAccount(password) {
-    const res = await fetch(`${API_URL}/users/${currentUser._id}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password })
-    });
+    try {
+        const res = await fetch(`${API_URL}/users/${currentUser._id}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password })
+        });
 
-    const data = await res.json();
-    if (res.ok) {
-        alert('Účet byl smazán.');
-        logout();
-        deleteModal.style.display = 'none';
-        deleteConfirmPassword.value = '';
-    } else {
-        alert(data.message);
+        const data = await res.json();
+        if (res.ok) {
+            alert('Účet byl úspěšně smazán.');
+            logout();
+            deleteModal.style.display = 'none';
+            deleteConfirmPassword.value = '';
+        } else {
+            alert(data.message || 'Chyba při mazání účtu (špatné heslo?)');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Chyba při komunikaci se serverem');
     }
 }
 
@@ -205,10 +298,32 @@ function logout() {
     currentUser = null;
     localStorage.removeItem('user');
     showAuth();
+    // Clear forms for security
+    loginForm.reset();
+    registerForm.reset();
+}
+
+// --- View Switching ---
+function showRegisterView(e) {
+    if(e) e.preventDefault();
+    loginContainer.style.display = 'none';
+    registerContainer.style.display = 'block';
+    // Clear errors or inputs if needed
+}
+
+function showLoginView(e) {
+    if(e) e.preventDefault();
+    registerContainer.style.display = 'none';
+    loginContainer.style.display = 'block';
 }
 
 // --- Event Listeners ---
 
+// Auth Switching
+if(showRegisterLink) showRegisterLink.addEventListener('click', showRegisterView);
+if(showLoginLink) showLoginLink.addEventListener('click', showLoginView);
+
+// Forms
 loginForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const u = document.getElementById('login-username').value;
@@ -230,6 +345,7 @@ addNoteForm.addEventListener('submit', (e) => {
     addNote(t, c);
 });
 
+// Controls
 logoutBtn.addEventListener('click', logout);
 
 showImportantBtn.addEventListener('click', () => {
@@ -249,6 +365,7 @@ showAllBtn.addEventListener('click', () => {
 // Modal Logic
 deleteAccountBtn.onclick = function() {
     deleteModal.style.display = "block";
+    deleteConfirmPassword.focus();
 }
 
 closeModal.onclick = function() {
@@ -270,5 +387,9 @@ confirmDeleteBtn.addEventListener('click', () => {
     }
 });
 
+// Use global window functions for inline onclick in renderNotes (simple and effective)
+window.toggleImportance = toggleImportance;
+window.deleteNote = deleteNote;
+
 // Start
-init();
+document.addEventListener('DOMContentLoaded', init);

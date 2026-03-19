@@ -20,12 +20,30 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Database Connection
-mongoose.connect(MONGODB_URI)
-    .then(() => console.log('MongoDB Connected'))
-    .catch(err => console.error('MongoDB Connection Error:', err));
+// Database Connection Logic
+const connectDB = async () => {
+    try {
+        await mongoose.connect(MONGODB_URI);
+        console.log('MongoDB Connected');
+    } catch (err) {
+        console.error('MongoDB Connection Error:', err.message);
+        // Do not exit process, so server can still serve static files and return 503
+    }
+};
+connectDB();
+
+// Middleware to check DB connection for API routes
+app.use('/api', (req, res, next) => {
+    if (mongoose.connection.readyState !== 1) {
+        return res.status(503).json({ message: 'Service Unavailable: Database connection failed' });
+    }
+    next();
+});
 
 // --- API ROUTES ---
+
+// Heartbeat for frontend to check connection
+app.get('/api/heartbeat', (req, res) => res.status(200).send('OK'));
 
 // 1. Register User
 app.post('/api/register', async (req, res) => {

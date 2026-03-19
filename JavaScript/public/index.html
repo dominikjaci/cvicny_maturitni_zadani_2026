@@ -31,6 +31,7 @@
                             <label for="login-password">Heslo</label>
                             <input type="password" id="login-password" placeholder="Zadejte heslo" required autocomplete="current-password">
                         </div>
+                        <div id="login-error" class="form-error"></div>
                         <button type="submit" class="primary full-width">Přihlásit se</button>
                     </form>
                     <p class="auth-switch">
@@ -48,8 +49,10 @@
                         </div>
                         <div class="form-group">
                             <label for="register-password">Heslo</label>
-                            <input type="password" id="register-password" placeholder="Zvolte si heslo (min. 6 znaků)" required autocomplete="new-password" minlength="6">
+                            <input type="password" id="register-password" placeholder="Zvolte si heslo (min. 6 znaků)" required autocomplete="new-password">
+                            <small class="helper-text">Heslo musí mít alespoň 6 znaků.</small>
                         </div>
+                        <div id="register-error" class="form-error"></div>
                         <button type="submit" class="primary full-width">Vytvořit účet</button>
                     </form>
                     <p class="auth-switch">
