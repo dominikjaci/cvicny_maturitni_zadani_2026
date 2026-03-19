@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Databáze poznámek</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Databáze poznámek</h1>
+            <div id="user-info" style="display: none;">
+                <span id="username-display"></span>
+                <button id="logout-btn">Odhlásit se</button>
+            </div>
+        </header>
+
+        <main>
+            <!-- Auth Section -->
+            <section id="auth-section">
+                <!-- Login Form Container -->
+                <div id="login-container" class="auth-card">
+                    <h2>Přihlášení</h2>
+                    <form id="login-form">
+                        <div class="form-group">
+                            <label for="login-username">Uživatelské jméno</label>
+                            <input type="text" id="login-username" placeholder="Zadejte jméno" required autocomplete="username">
+                        </div>
+                        <div class="form-group">
+                            <label for="login-password">Heslo</label>
+                            <input type="password" id="login-password" placeholder="Zadejte heslo" required autocomplete="current-password">
+                        </div>
+                        <button type="submit" class="primary full-width">Přihlásit se</button>
+                    </form>
+                    <p class="auth-switch">
+                        Nemáte ještě účet? <a href="#" id="show-register-link">Zaregistrujte se</a>
+                    </p>
+                </div>
+
+                <!-- Register Form Container (Hidden by default) -->
+                <div id="register-container" class="auth-card" style="display: none;">
+                    <h2>Registrace</h2>
+                    <form id="register-form">
+                        <div class="form-group">
+                            <label for="register-username">Uživatelské jméno</label>
+                            <input type="text" id="register-username" placeholder="Zvolte si jméno" required autocomplete="new-username">
+                        </div>
+                        <div class="form-group">
+                            <label for="register-password">Heslo</label>
+                            <input type="password" id="register-password" placeholder="Zvolte si heslo (min. 6 znaků)" required autocomplete="new-password" minlength="6">
+                        </div>
+                        <button type="submit" class="primary full-width">Vytvořit účet</button>
+                    </form>
+                    <p class="auth-switch">
+                        Již máte účet? <a href="#" id="show-login-link">Přihlaste se</a>
+                    </p>
+                </div>
+            </section>
+
+            <!-- Dashboard Section -->
+            <section id="dashboard-section" style="display: none;">
+                
+                <div class="controls">
+                    <button id="show-important-btn">Zobrazit pouze důležité</button>
+                    <button id="show-all-btn" style="display: none;">Zobrazit všechny</button>
+                    <button id="delete-account-btn" class="danger">Zrušit účet</button>
+                </div>
+
+                <div class="add-note-card">
+                    <h3>Nová poznámka</h3>
+                    <form id="add-note-form">
+                        <input type="text" id="note-title" placeholder="Nadpis poznámky" required>
+                        <textarea id="note-content" placeholder="Text poznámky..." rows="4" required></textarea>
+                        <button type="submit">Přidat poznámku</button>
+                    </form>
+                </div>
+
+                <div id="notes-list" class="notes-grid">
+                    <!-- Notes will be injected here -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal for Account Deletion Confirmation -->
+    <div id="delete-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Potvrzení smazání účtu</h2>
+            <p>Pro smazání účtu a všech poznámek zadejte své heslo.</p>
+            <input type="password" id="delete-confirm-password" placeholder="Vaše heslo">
+            <button id="confirm-delete-btn" class="danger">Smazat vše</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
