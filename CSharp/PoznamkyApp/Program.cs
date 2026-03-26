@@ -1,5 +1,7 @@
 var builder = WebApplication.CreateBuilder(args);
-
+// Program si automaticky sáhne do konfigurace (appsettings nebo environment variables)
+var supabaseUrl = builder.Configuration["https://vszxyyvieexgbkjsbuqb.supabase.co"];
+var supabaseKey = builder.Configuration["sb_publishable_0ouThm0oBtn0P1jkwiBzjw_Nd8YdxjV"];
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
