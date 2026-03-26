@@ -24,10 +24,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 const connectDB = async () => {
     try {
         await mongoose.connect(MONGODB_URI);
-        console.log('MongoDB Connected');
+        // Tohle jsem přidal - kontrola typu připojení
+        const connectionType = MONGODB_URI.includes('mongodb+srv') ? 'MongoDB Atlas (Cloud)' : 'Local MongoDB';
+        console.log(`✅ MongoDB Connected to: ${connectionType}`);
     } catch (err) {
-        console.error('MongoDB Connection Error:', err.message);
-        // Do not exit process, so server can still serve static files and return 503
+        console.error('❌ MongoDB Connection Error:', err.message);
     }
 };
 connectDB();
@@ -50,22 +51,16 @@ app.post('/api/register', async (req, res) => {
     try {
         const { username, password } = req.body;
         
-        // Basic validation
         if (!username || !password) {
             return res.status(400).json({ message: 'Please provide username and password' });
         }
 
-        // Check if user exists
         const userExists = await User.findOne({ username });
         if (userExists) {
             return res.status(400).json({ message: 'User already exists' });
         }
 
-        // Create user
         const user = await User.create({ username, password });
-        
-        // Return user info (no token implementation for simplicity unless needed, standard session or client-side storage assumed for "exam" context usually implies simpler approaches, but since it's an API, I should probably return the user ID or use a simple session mechanism. I'll rely on the client storing the userId or username/password for basic auth, or just return the user id to keep it simple as a custom header or local storage id).
-        // Actually, usually these exams require some form of session. I'll return the user ID and use it in subsequent requests to identify the user (simplified auth).
         
         res.status(201).json({
             _id: user._id,
@@ -81,7 +76,6 @@ app.post('/api/register', async (req, res) => {
 app.post('/api/login', async (req, res) => {
     try {
         const { username, password } = req.body;
-
         const user = await User.findOne({ username });
 
         if (user && (await user.matchPassword(password))) {
@@ -103,20 +97,15 @@ app.delete('/api/users/:id', async (req, res) => {
     try {
         const { password } = req.body;
         const userId = req.params.id;
-
         const user = await User.findById(userId);
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Verify password before deletion
         if (user && (await user.matchPassword(password))) {
-            // Delete all user notes first
             await Note.deleteMany({ user: userId });
-            // Delete user
             await User.findByIdAndDelete(userId);
-            
             res.json({ message: 'Account and all notes deleted successfully' });
         } else {
             res.status(401).json({ message: 'Invalid password' });
@@ -140,7 +129,6 @@ app.get('/api/notes', async (req, res) => {
             query.isImportant = true;
         }
 
-        // Sort by createdAt descending (newest first)
         const notes = await Note.find(query).sort({ createdAt: -1 });
         res.json(notes);
     } catch (error) {
@@ -173,14 +161,9 @@ app.post('/api/notes', async (req, res) => {
 app.delete('/api/notes/:id', async (req, res) => {
     try {
         const note = await Note.findById(req.params.id);
-
         if (!note) {
             return res.status(404).json({ message: 'Note not found' });
         }
-        
-        // In a real app check if the user owns the note, but here simplistic
-        // assumption: client sends correct requests request.
-        
         await Note.findByIdAndDelete(req.params.id);
         res.json({ message: 'Note removed' });
     } catch (error) {
@@ -192,7 +175,6 @@ app.delete('/api/notes/:id', async (req, res) => {
 app.put('/api/notes/:id/importance', async (req, res) => {
     try {
         const { isImportant } = req.body;
-        
         const note = await Note.findById(req.params.id);
         
         if (!note) {
@@ -214,5 +196,5 @@ app.get(/(.*)/, (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`🚀 Server running on port ${PORT}`);
 });
