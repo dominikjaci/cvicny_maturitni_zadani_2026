@@ -1,8 +1,66 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Domů";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="jumbotron">
+                <h1 class="display-4">Poznámky</h1>
+                <p class="lead">Bezpečná aplikace pro správu vašich osobních textových poznámek</p>
+                <hr class="my-4">
+
+                @{
+                    var userId = Context.Session.GetInt32("UserId");
+                    var username = Context.Session.GetString("Username");
+                }
+
+                @if (userId.HasValue)
+                {
+                    <div class="alert alert-success">
+                        Jste přihlášeni jako <strong>@username</strong>
+                    </div>
+                    <p class="lead">
+                        <a class="btn btn-primary btn-lg" href="@Url.Action("Index", "Notes")" role="button">Moje poznámky</a>
+                        <a class="btn btn-warning btn-lg" href="@Url.Action("DeleteAccount", "Auth")" role="button">Smazat účet</a>
+                        <a class="btn btn-danger btn-lg" href="@Url.Action("Logout", "Auth")" role="button">Odhlásit se</a>
+                    </p>
+                }
+                else
+                {
+                    <p class="lead">
+                        <a class="btn btn-primary btn-lg" href="@Url.Action("Register", "Auth")" role="button">Registrace</a>
+                        <a class="btn btn-secondary btn-lg" href="@Url.Action("Login", "Auth")" role="button">Přihlášení</a>
+                    </p>
+                }
+            </div>
+
+            <div class="row mt-5">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">🔒 Bezpečné</h5>
+                            <p class="card-text">Vaše poznámky jsou uloženy v zabezpečené databázi v cloudu</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">📝 Snadné</h5>
+                            <p class="card-text">Jednoduchost a intuitivní rozhraní pro správu poznámek</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">☁️ Cloud</h5>
+                            <p class="card-text">Přístup ke svým poznámkám kdekoliv a kdykoliv</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

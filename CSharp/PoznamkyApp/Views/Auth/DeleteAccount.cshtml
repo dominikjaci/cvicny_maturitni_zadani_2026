@@ -1,0 +1,36 @@
+@{
+    ViewData["Title"] = "Smazat účet";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-danger">
+                <div class="card-body">
+                    <h2 class="card-title mb-4 text-danger">Smazat účet</h2>
+                    
+                    <p class="alert alert-warning">
+                        Tato akce je nevratná. Všechny vaše poznámky a účet budou trvale odstraněny.
+                    </p>
+                    
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger">
+                            @Html.ValidationMessage("", new { @class = "text-danger" })
+                        </div>
+                    }
+
+                    <form method="post">
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Potvrzovací heslo</label>
+                            <input type="password" class="form-control" id="password" name="password" placeholder="Zadejte vaše heslo pro potvrzení" required>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-danger w-100">Trvale smazat můj účet</button>
+                        <a href="@Url.Action("Index", "Notes")" class="btn btn-secondary w-100 mt-2">Zrušit</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

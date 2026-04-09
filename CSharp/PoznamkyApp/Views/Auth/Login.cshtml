@@ -1,0 +1,40 @@
+@{
+    ViewData["Title"] = "Přihlášení";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title mb-4">Přihlášení</h2>
+                    
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger">
+                            @Html.ValidationMessage("", new { @class = "text-danger" })
+                        </div>
+                    }
+
+                    <form method="post">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Uživatelské jméno</label>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Heslo</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">Přihlásit se</button>
+                    </form>
+                    
+                    <div class="mt-3 text-center">
+                        <p>Nemáte účet? <a href="@Url.Action("Register", "Auth")">Registrujte se</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

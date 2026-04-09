@@ -1,0 +1,46 @@
+@model List<PoznamkyApp.Models.Note>
+
+@{
+    ViewData["Title"] = "Moje poznámky";
+}
+
+<div class="container mt-5">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>Moje poznámky</h1>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="@Url.Action("Create", "Notes")" class="btn btn-primary">+ Nová poznámka</a>
+        </div>
+    </div>
+
+    @if (Model == null || Model.Count == 0)
+    {
+        <div class="alert alert-info" role="alert">
+            Nemáte žádné poznámky. <a href="@Url.Action("Create", "Notes")">Vytvořte novou</a>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var note in Model)
+            {
+                <div class="col-md-6 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">@note.Title</h5>
+                            <p class="card-text">@note.Content.Substring(0, Math.Min(100, note.Content.Length))@(note.Content.Length > 100 ? "..." : "")</p>
+                            <small class="text-muted">Vytvořeno: @note.CreatedAt.ToString("dd.MM.yyyy HH:mm")</small>
+                            <div class="mt-3">
+                                <a href="@Url.Action("Edit", "Notes", new { id = note.Id })" class="btn btn-sm btn-warning">Upravit</a>
+                                <form method="post" action="@Url.Action("Delete", "Notes", new { id = note.Id })" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Opravdu chcete smazat tuto poznámku?')">Smazat</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

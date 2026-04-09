@@ -1,9 +1,21 @@
+using PoznamkyApp.Services;
+
 var builder = WebApplication.CreateBuilder(args);
-// Program si automaticky sáhne do konfigurace (appsettings nebo environment variables)
-var supabaseUrl = builder.Configuration["https://vszxyyvieexgbkjsbuqb.supabase.co"];
-var supabaseKey = builder.Configuration["sb_publishable_0ouThm0oBtn0P1jkwiBzjw_Nd8YdxjV"];
+
+// Supabase configuration
+var supabaseUrl = builder.Configuration["Supabase:Url"] ?? "https://vszxyyvieexgbkjsbuqb.supabase.co";
+var supabaseKey = builder.Configuration["Supabase:Key"] ?? "sb_publishable_0ouThm0oBtn0P1jkwiBzjw_Nd8YdxjV";
+
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<ISupabaseService>(sp => new SupabaseService(supabaseUrl, supabaseKey, sp.GetRequiredService<IHttpClientFactory>()));
 
 var app = builder.Build();
 
@@ -11,13 +23,12 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
+app.UseSession();
 app.UseRouting();
-
 app.UseAuthorization();
 
 app.MapStaticAssets();
