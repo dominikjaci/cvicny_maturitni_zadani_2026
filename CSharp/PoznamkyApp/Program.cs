@@ -6,6 +6,10 @@ var builder = WebApplication.CreateBuilder(args);
 var supabaseUrl = builder.Configuration["Supabase:Url"] ?? "https://vszxyyvieexgbkjsbuqb.supabase.co";
 var supabaseKey = builder.Configuration["Supabase:Key"] ?? "sb_publishable_0ouThm0oBtn0P1jkwiBzjw_Nd8YdxjV";
 
+// Logging
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddSession(options =>
@@ -15,7 +19,7 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 builder.Services.AddHttpClient();
-builder.Services.AddScoped<ISupabaseService>(sp => new SupabaseService(supabaseUrl, supabaseKey, sp.GetRequiredService<IHttpClientFactory>()));
+builder.Services.AddScoped<ISupabaseService>(sp => new SupabaseService(supabaseUrl, supabaseKey, sp.GetRequiredService<IHttpClientFactory>(), sp.GetRequiredService<ILogger<SupabaseService>>()));
 
 var app = builder.Build();
 

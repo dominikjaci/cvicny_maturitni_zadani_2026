@@ -20,11 +20,18 @@ CREATE TABLE notes (
 -- Vytvoření indexu na user_id pro rychlejší vyhledávání
 CREATE INDEX idx_notes_user_id ON notes(user_id);
 
--- Nastavení RLS (Row Level Security) - volitelné, ale doporučené
+-- Povolení RLS
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notes ENABLE ROW LEVEL SECURITY;
 
--- Vytvořit policy pro notes tabulku
-CREATE POLICY "Users can only see their own notes" ON notes
-    FOR SELECT
-    USING (auth.uid()::text = user_id::text);
+-- RLS Policy pro users - všichni mohou čtení a zápis (bez omezení pro registraci/přihlášení)
+CREATE POLICY "Allow all operations on users" ON users
+    FOR ALL
+    USING (true)
+    WITH CHECK (true);
+
+-- RLS Policy pro notes - všichni mohou čtení a zápis
+CREATE POLICY "Allow all operations on notes" ON notes
+    FOR ALL
+    USING (true)
+    WITH CHECK (true);

@@ -12,7 +12,7 @@
                     @if (!ViewData.ModelState.IsValid)
                     {
                         <div class="alert alert-danger">
-                            @Html.ValidationMessage("", new { @class = "text-danger" })
+                            @Html.ValidationSummary(false, "", new { @class = "text-danger" })
                         </div>
                     }
 
