@@ -27,10 +27,21 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
+    // Disable HTTPS redirect on Render - it's handled by reverse proxy
+    // app.UseHsts();
+}
+else
+{
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// Don't use UseHttpsRedirection on Render - it causes port binding issues
+// The reverse proxy handles SSL/TLS
+if (!app.Environment.IsProduction() || Environment.GetEnvironmentVariable("ASPNETCORE_URLS") == null)
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseSession();
 app.UseRouting();
 app.UseAuthorization();
