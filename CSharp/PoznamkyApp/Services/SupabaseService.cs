@@ -25,7 +25,6 @@ public class SupabaseService : ISupabaseService
         client.DefaultRequestHeaders.Clear();
         client.DefaultRequestHeaders.Add("apikey", _key);
         client.DefaultRequestHeaders.Add("Authorization", $"Bearer {_key}");
-        client.DefaultRequestHeaders.Add("Content-Type", "application/json");
         client.DefaultRequestHeaders.Add("Prefer", "return=representation");
         return client;
     }

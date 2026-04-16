@@ -42,6 +42,7 @@ if (!app.Environment.IsProduction() || Environment.GetEnvironmentVariable("ASPNE
     app.UseHttpsRedirection();
 }
 
+app.UseStaticFiles();
 app.UseSession();
 app.UseRouting();
 app.UseAuthorization();
